@@ -19,13 +19,6 @@ let load = exports.load = function (data, mongooseConnection) {
 
     } else if (typeof data === 'string') {
 
-        //Get the absolute dir path if a relative path was given
-        if (data.substr(0, 1) !== '/') {
-            let parentPath = module.parent.filename.split('/');
-            parentPath.pop();
-            data = parentPath.join('/') + '/' + data;
-        }
-
         //Determine if data is pointing to a file or directory
         try {
             let stats = fs.statSync(data);
@@ -52,13 +45,6 @@ let load = exports.load = function (data, mongooseConnection) {
  * @param {Connection} db The mongoose connection to use
  */
 function loadDir(directoryPath, db) {
-
-    //Get the absolute dir path if a relative path was given
-    if (directoryPath.substr(0, 1) !== '/') {
-        let parentPath = module.parent.filename.split('/');
-        parentPath.pop();
-        directoryPath = parentPath.join('/') + '/' + directoryPath;
-    }
 
     //Load each file in directory
     let files = [];
@@ -88,14 +74,6 @@ function loadDir(directoryPath, db) {
  * @param {Connection} db The mongoose connection to use
  */
 function loadFile(file, db) {
-    let parentPath;
-
-    if (file.substr(0, 1) !== '/') {
-        parentPath = module.parent.filename.split('/');
-        parentPath.pop();
-        file = parentPath.join('/') + '/' + file;
-    }
-
     return load(require(file), db);
 }
 
