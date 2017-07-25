@@ -1,0 +1,15 @@
+{
+  "name": "mongoose-fixtures",
+  "version": "1.0.0",
+  "description": "simple mongoose fixture loader",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "keywords": [
+    "mongoose",
+    "fixtures"
+  ],
+  "author": "Ivan Talalaev",
+  "license": "MIT"
+}
