@@ -1,10 +1,10 @@
 {
-  "name": "mongoose-fixtures",
-  "version": "1.0.1",
-  "description": "simple mongoose fixture loader",
+  "name": "devhouse-fixtures",
+  "version": "1.0.0",
+  "description": "Simple mongoose fixture loader",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "mongoose",

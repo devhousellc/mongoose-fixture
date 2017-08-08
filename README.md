@@ -1,4 +1,4 @@
-mongoose-fixtures
+devhouse-fixtures
 =================
 
 This is the clone of the original repo [mongoose-fixtures](https://github.com/powmedia/mongoose-fixtures) except several things:
