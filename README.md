@@ -1,6 +1,9 @@
 devhouse-fixtures
 =================
 
+[![NPM](https://nodei.co/npm/devhouse-fixtures.svg?downloads=true&downloadRank=true)](https://www.npmjs.com/package/devhouse-fixtures)&nbsp;&nbsp;
+
+
 This is the clone of the original repo [mongoose-fixtures](https://github.com/powmedia/mongoose-fixtures) except several things:
 
 1. No __mongoose__ and __async__ unnecessary dependencies
