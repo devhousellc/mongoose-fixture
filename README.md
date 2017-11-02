@@ -61,11 +61,11 @@ Usage
 -----
     
     let db = require('../data-model/db'),
-    { FixtureManager } = require('devhouse-fixtures');
+    fixtures = require('pow-mongoose-fixtures');
     
     describe('tescases', function () {
         before(done => {
-            FixtureManager.load(__dirname + '/fixtures/', db.connection)
+            fixtures.load(__dirname + '/fixtures/', db.connection)
                 .then(() => done());
         });
         it('Check database count', done => {
@@ -78,5 +78,5 @@ Usage
 Installation
 ------------
     
-    git clone https://github.com/devhousellc/mongoose-fixtures.git
+    git clone https://github.com/chichivica/mongoose-fixtures.git
     npm install
