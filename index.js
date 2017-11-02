@@ -1,154 +1,215 @@
 let fs = require('fs');
+let { MissingSchemaError } = require('mongoose');
 
-/**
- * Clears a collection and inserts the given data as new documents
- *
- * @param {Mixed}       The data to load. This parameter accepts either:
- *                          String: Path to a file or directory to load
- *                          Object: Object literal in the form described above
- * @param {Connection}  [db] the mongoose connection to use.
- *                          Defaults to mongoose.connection.
- * @returns {Promise} returns empty promise in case when the objects loaded successfully
- */
+class FixturesManager {
 
+  /**
+   * @param db {Connection} The mongoose connection to use
+   * @param skipValidation {boolean=false} defines if the schema validation should be skipped
+   */
+  constructor(db, skipValidation = false) {
+    this.db = db;
+    this.skipValidation = skipValidation;
+  }
 
-let load = exports.load = function (data, mongooseConnection) {
+  /**
+   * Clears a collection and inserts the given data as new documents
+   *
+   *                          String: Path to a file or directory to load
+   *                          Object: Object literal in the form described above
+   *                          Defaults to mongoose.connection.
+   *
+   * @param data {Object|string} define the fixture source (read more details in description)
+   * @returns {Promise} returns empty promise in case when the objects loaded successfully
+   */
+  load(data) {
     if (typeof data === 'object') {
-
-        return loadObject(data, mongooseConnection);
-
+      return this.loadObject(data);
     } else if (typeof data === 'string') {
+      // Determine if data is pointing to a file or directory
+      try {
+        let stats = fs.statSync(data);
 
-        //Determine if data is pointing to a file or directory
-        try {
-            let stats = fs.statSync(data);
-
-            if (stats.isDirectory()) {
-                return loadDir(data, mongooseConnection);
-            } else { //File
-                return loadFile(data, mongooseConnection);
-            }
-        } catch (err) {
-            return Promise.reject(err);
+        if (stats.isDirectory()) {
+          return this.loadDir(data);
+        } else { // File
+          return this.loadFile(data);
         }
-
-
-    } else { //Unsupported type
-        return Promise.reject(new Error('Data must be an object, array or string (file or dir path)'));
+      } catch (err) {
+        console.error('Error during fixtures loading', err);
+        return Promise.reject(err);
+      }
+    } else { // Unsupported type
+      return Promise.reject(new Error('Data must be an object, array or string (file or dir path)'));
     }
-};
+  }
 
-
-/**
- * Loads fixtures from all files in a directory
- * @param {string} directoryPath The directory path to load e.g. 'data/fixtures' or '../data'
- * @param {Connection} db The mongoose connection to use
- */
-function loadDir(directoryPath, db) {
-
-    //Load each file in directory
+  /**
+   * Loads fixtures from all files in a directory
+   * @param {string} directoryPath The directory path to load e.g. 'data/fixtures' or '../data'
+   */
+  loadDir(directoryPath) {
+    // Load each file in directory
     let files = [];
     try {
-        files = fs.readdirSync(directoryPath)
+      files = fs.readdirSync(directoryPath);
     } catch (err) {
-        return Promise.reject(err)
+      return Promise.reject(err);
     }
 
     let promiseChain = Promise.resolve({});
 
-
     // load file consequently
-    files.forEach(file => {
-        promiseChain = promiseChain.then(() => {
-            return loadFile(directoryPath + '/' + file, db)
-        })
+    files.forEach((file) => {
+      promiseChain = promiseChain.then(() => {
+        return this.loadFile(directoryPath + '/' + file);
+      });
     });
 
     return promiseChain;
-}
+  }
 
+  /**
+   * Loads fixtures from one file
+   * @param {string} file The full path to the file to load
+   */
 
-/**
- * Loads fixtures from one file
- * @param {string} file The full path to the file to load
- * @param {Connection} db The mongoose connection to use
- */
-function loadFile(file, db) {
-    return load(require(file), db);
-}
+  loadFile(file) {
+    console.log('loading fixtures from file', file);
+    return this.load(require(file));
+  }
 
-/**
- * Loads fixtures from object data
- * @param {Object} data The data to load, keyed by the Mongoose model name e.g.:
- *                          { User: [{name: 'Alex'}, {name: 'Bob'}] }
- * @param {Connection} db The mongoose connection to use
- */
-function loadObject(data, db) {
+  /**
+   * Loads fixtures from object data
+   * @param {Object} data The data to load, keyed by the Mongoose model name e.g.:
+   *                          { User: [{name: 'Alex'}, {name: 'Bob'}] }
+   */
+
+  loadObject(data) {
     let promiseChain = Promise.resolve({});
 
-    Object.keys(data).forEach(modelName => {
-        promiseChain = promiseChain.then(() => {
-            return insertCollection(modelName, data[modelName], db)
-        })
+    Object.keys(data).forEach((modelName) => {
+      promiseChain = promiseChain
+        .then(() => this.insertCollection(modelName, data[modelName]))
+        .catch((err) => {
+          console.error('fixtures loading error: ', err.message);
+          throw err;
+        });
     });
 
-    return promiseChain;
-}
+    return promiseChain
+      .then(() => {
+        console.log('inserted fixtures', Object.keys(data));
+      });
+  }
 
+  /**
+   * Clears a collection and inserts the given data as new documents
+   * @param {string} modelName The name of the model e.g. User, Post etc.
+   * @param {object} data The data to insert, as an array or object. E.g.:
+   *                          { user1: {name: 'Alex'}, user2: {name: 'Bob'} }
+   *                      or:
+   *                          [ {name: 'Alex'}, {name:'Bob'} ]
+   */
 
-/**
- * Clears a collection and inserts the given data as new documents
- * @param {string} modelName The name of the model e.g. User, Post etc.
- * @param {object} data The data to insert, as an array or object. E.g.:
- *                          { user1: {name: 'Alex'}, user2: {name: 'Bob'} }
- *                      or:
- *                          [ {name: 'Alex'}, {name:'Bob'} ]
- * @param {Connection} db The mongoose connection to use
- */
-function insertCollection(modelName, data, db) {
-    let Model = db.model(modelName),
-        promiseChain = Promise.resolve({});
+  insertCollection(modelName, data) {
+    let Model = this.db.model(modelName),
+      promiseChain = Promise.resolve({});
 
+    console.log('inserting fixtures', modelName, 'skipValidation', this.skipValidation);
+    return this.clearCollection(modelName) // clear existing collection
+      .then(() => {
+        let items = [];
+        if (Array.isArray(data)) {
+          items = data;
+        } else {
+          for (let i in data) {
+            items.push(data[i]);
+          }
+        }
 
-    return clearCollection(modelName, db) //clear existing collection
-        .then(() => {
-            let items = [];
-            if (Array.isArray(data)) {
-                items = data;
+        items.forEach((item) => {
+          promiseChain = promiseChain.then(() => {
+            if (!this.skipValidation) {
+
+              let doc = new Model(item);
+              return doc.save();
             } else {
-                for (let i in data) {
-                    items.push(data[i]);
-                }
+              return new Promise((resolve, reject) => {
+                Model.collection.insert(item, (err, doc) => {
+                  if (err) {
+                    console.error('Fixture uploading error', Model.name, err);
+                    return reject(err);
+                  }
+
+                  return resolve(doc);
+                });
+              });
             }
-
-            items.forEach(item => {
-                promiseChain = promiseChain.then(() => {
-                    let doc = new Model(item);
-                    return doc.save();
-                })
-            });
-
-            return promiseChain;
+          });
         });
-}
 
-/**
- * Clear collection for specified model name
- * @param {string} modelName The name of the model e.g. User, Post etc.
- * @param {Connection} db The mongoose connection to use
- * @returns {Promise}
- */
-function clearCollection(modelName, db) {
-    let Model = db.model(modelName);
+        return promiseChain;
+      });
+  }
+
+  /**
+   * Clear collection for specified model name
+   * @param {string} modelName The name of the model e.g. User, Post etc.
+   * @returns {Promise}
+   */
+
+  clearCollection(modelName) {
+    let Model = this.db.model(modelName);
+    console.log('cleaning collection', modelName);
 
     return new Promise((resolve, reject) => {
-        Model.collection.remove((err) => {
+      Model.remove({}, (err) => {
+        if (err) {
+          return reject(err);
+        }
+        console.log('cleaned collection', modelName);
+        resolve();
+      });
+    });
+  }
+
+  dumpCollection(modelName, path) {
+    return this.db
+      .model(modelName)
+      .find({})
+      .lean()
+      .exec()
+      .then((items) => {
+        let json = JSON.stringify(items, null, 2).replace(/(: )("[a-f\d]{24}")(,?)/gi, '$1ObjectID($2)$3');
+        let content = `const { ObjectID } = require('mongoose').mongo;\nexports.${modelName} = ${json};`;
+        return new Promise((res, rej) => {
+          fs.writeFile(path, content, (err) => {
             if (err) {
-                reject(err)
+              console.error('Collection', modelName, 'has NOT been dumped', err);
+              return rej(err);
             }
-            else {
-                resolve();
-            }
-        })
-    })
+
+            console.log('Collection', modelName, 'has been dumped');
+            return res();
+          });
+        });
+      });
+  }
+
+  dump(filePaths) {
+    let promises = [];
+    console.log('dumping', filePaths);
+    filePaths.forEach((filePath) => {
+      let models = require(filePath);
+      Object.keys(models).forEach((modelName) => {
+        console.log('dumping', modelName, filePath);
+        promises.push(this.dumpCollection(modelName, filePath));
+      });
+    });
+
+    return Promise.all(promises);
+  }
 }
+
+module.exports = { FixturesManager };

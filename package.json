@@ -1,7 +1,7 @@
 {
   "name": "devhouse-fixtures",
   "version": "1.0.0",
-  "description": "Simple mongoose fixture loader",
+  "description": "Mongoose fixture loader",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,5 +11,11 @@
     "fixtures"
   ],
   "author": "Ivan Talalaev",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^4.10.0"
+  },
+  "dependencies": {
+    "mongoose": "^4.12.6"
+  }
 }
