@@ -6,7 +6,7 @@ devhouse-fixtures
 
 This is the clone of the original repo [mongoose-fixtures](https://github.com/powmedia/mongoose-fixtures) except several things:
 
-1. Db dumping supporting (could be combined with your owner migration tool to do full fixture migration)
+1. Db dumping support (could be combined with your owner migration tool to do full fixture migration)
 2. No __async__ unnecessary dependencies
 3. No callback, returns _Promise_ instead
 4. Consequent models loading
