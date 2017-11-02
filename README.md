@@ -6,10 +6,11 @@ devhouse-fixtures
 
 This is the clone of the original repo [mongoose-fixtures](https://github.com/powmedia/mongoose-fixtures) except several things:
 
-1. No __mongoose__ and __async__ unnecessary dependencies
-2. No callback, returns _Promise_ instead
-3. Consequent models loading
-4. Connection must be specified (you almost always have db connection in your project, isn't it?)
+1. Db dumping supporting (could be combined with your owner migration tool to do full fixture migration)
+2. No __async__ unnecessary dependencies
+3. No callback, returns _Promise_ instead
+4. Consequent models loading
+5. Connection must be specified (you almost always have db connection in your project, isn't it?)
 
 
 Fixtures can be in one file, or divided up into separate files for organisation
@@ -60,11 +61,11 @@ Usage
 -----
     
     let db = require('../data-model/db'),
-    fixtures = require('pow-mongoose-fixtures');
+    { FixtureManager } = require('devhouse-fixtures');
     
     describe('tescases', function () {
         before(done => {
-            fixtures.load(__dirname + '/fixtures/', db.connection)
+            FixtureManager.load(__dirname + '/fixtures/', db.connection)
                 .then(() => done());
         });
         it('Check database count', done => {
@@ -77,5 +78,5 @@ Usage
 Installation
 ------------
     
-    git clone https://github.com/chichivica/mongoose-fixtures.git
+    git clone https://github.com/devhousellc/mongoose-fixtures.git
     npm install
