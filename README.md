@@ -61,7 +61,7 @@ Usage
 -----
     
     let db = require('../data-model/db'),
-    fixtures = require('pow-mongoose-fixtures');
+    fixtures = require('devhouse-fixtures');
     
     describe('tescases', function () {
         before(done => {
@@ -78,5 +78,4 @@ Usage
 Installation
 ------------
     
-    git clone https://github.com/chichivica/mongoose-fixtures.git
-    npm install
+    npm install devhouse-fixtures --save-dev

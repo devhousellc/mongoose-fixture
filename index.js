@@ -174,6 +174,14 @@ class FixturesManager {
     });
   }
 
+  /**
+   * Executes collectin dumping
+   * @param modelName {string} name of Mongoose model
+   * @param path {string} path to file where the fixture would be written in the format:
+   *      const { ObjectID } = require('mongoose').mongo
+   *      exports.ModelName = [{...}];
+   * @return {Promise.<void>}
+   */
   dumpCollection(modelName, path) {
     return this.db
       .model(modelName)
@@ -197,6 +205,11 @@ class FixturesManager {
       });
   }
 
+  /**
+   * Gets set of files which should be populated, that means dump without initial fixtures wouldn't work, it only dump already existent fixture files
+   * @param filePaths {string[]}
+   * @return {Promise.<void>}
+   */
   dump(filePaths) {
     let promises = [];
     console.log('dumping', filePaths);
