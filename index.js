@@ -113,44 +113,48 @@ class FixturesManager {
    */
 
   insertCollection(modelName, data) {
-    let Model = this.db.model(modelName),
-      promiseChain = Promise.resolve({});
+    let Model = this.db.model(modelName);
 
     console.log('inserting fixtures', modelName, 'skipValidation', this.skipValidation);
-    return this.clearCollection(modelName) // clear existing collection
-      .then(() => {
-        let items = [];
-        if (Array.isArray(data)) {
-          items = data;
-        } else {
-          for (let i in data) {
-            items.push(data[i]);
-          }
-        }
-
-        items.forEach((item) => {
-          promiseChain = promiseChain.then(() => {
-            if (!this.skipValidation) {
-
-              let doc = new Model(item);
-              return doc.save();
-            } else {
-              return new Promise((resolve, reject) => {
-                Model.collection.insert(item, (err, doc) => {
-                  if (err) {
-                    console.error('Fixture uploading error', Model.name, err);
-                    return reject(err);
-                  }
-
-                  return resolve(doc);
-                });
-              });
+    return new Promise((res, rej) => {
+      return this.clearCollection(modelName) // clear existing collection
+        .then(() => {
+          let promiseChain = Promise.resolve();
+          let items = [];
+          if (Array.isArray(data)) {
+            items = data;
+          } else {
+            for (let i in data) {
+              items.push(data[i]);
             }
-          });
-        });
+          }
 
-        return promiseChain;
-      });
+          items.forEach((item) => {
+            promiseChain = promiseChain.then(() => {
+              if (!this.skipValidation) {
+
+                let doc = new Model(item);
+                return doc.save();
+              } else {
+                return new Promise((resolve, reject) => {
+                  Model.collection.insert(item, (err, doc) => {
+                    if (err) {
+                      console.error('Fixture uploading error', Model.name, err);
+                      return reject(err);
+                    }
+
+                    return resolve(doc);
+                  });
+                });
+              }
+            });
+          });
+
+          return promiseChain;
+        })
+        .then(() => res())
+        .catch(() => rej);
+    });
   }
 
   /**
@@ -168,6 +172,7 @@ class FixturesManager {
         if (err) {
           return reject(err);
         }
+
         console.log('cleaned collection', modelName);
         resolve();
       });
